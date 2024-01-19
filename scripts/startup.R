@@ -1,0 +1,12 @@
+
+library(dplyr)
+library(tidyverse)
+library(data.table)
+library(devtools)
+library(Biostrings)
+library(ggplot2)
+library(ggpubr)
+library(GenomicRanges)
+library(rtracklayer)
+library(igraph)
+library(seqinr)
