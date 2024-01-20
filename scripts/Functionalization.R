@@ -103,3 +103,17 @@ functionalization <- function(output_path, expression_path) {
 }
 
 
+visualize_func <- function(func_counts){
+  func_counts <- as.data.frame(func_counts)
+  ggplot(func_counts, aes(x="", y=Freq, group=Var1, fill=Var1)) +
+    geom_bar(width = 1, stat = "identity", position = position_fill()) +
+    geom_text(aes(label = Freq), position = position_fill(vjust = 0.5), colour = 'black', size = 5) +
+    theme_void() +
+    theme(legend.title = element_blank(), panel.background = element_rect(fill = "white", color = "white"), legend.background = element_rect(fill = "white", color = 'white')) +
+    coord_polar("y") +
+    scale_fill_manual(values=c("#3B7BBD", "#E23F51", "#6CBC4D",'#F18244'))
+}
+
+
+
+

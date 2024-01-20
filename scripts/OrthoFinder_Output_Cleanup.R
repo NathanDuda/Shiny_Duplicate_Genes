@@ -55,6 +55,19 @@ clean_orthofinder <- function(input_path,output_path){
     mutate(dup_2 = case_when(dup_1 < dup_2 ~ dup_2, dup_1 > dup_2 ~ temp_column)) %>%
     select(-temp_column)
   
+  
+  
+  
+  #######################
+  # DELETE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+  dups <- dups[1:10,] 
+  two_to_ones <- two_to_ones[two_to_ones$Orthogroup %in% dups$Orthogroup,]
+  write.table(two_to_ones, file=paste0(output_path,'/Dup_Pair_Orthologs.tsv'))
+  #########################################################################################################################
+  
+  
+  
+  
   write.table(dups, file=paste0(output_path,'/Dup_Pairs.tsv'))
   
   return(nrow(dups))
