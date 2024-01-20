@@ -60,9 +60,9 @@ clean_orthofinder <- function(input_path,output_path){
   
   #######################
   # DELETE THISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
-  dups <- dups[1:10,] 
-  two_to_ones <- two_to_ones[two_to_ones$Orthogroup %in% dups$Orthogroup,]
-  write.table(two_to_ones, file=paste0(output_path,'/Dup_Pair_Orthologs.tsv'))
+  #dups <- dups[1:10,] 
+  #two_to_ones <- two_to_ones[two_to_ones$Orthogroup %in% dups$Orthogroup,]
+  #write.table(two_to_ones, file=paste0(output_path,'/Dup_Pair_Orthologs.tsv'))
   #########################################################################################################################
   
   

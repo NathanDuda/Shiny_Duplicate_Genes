@@ -3,63 +3,48 @@
 
 
 
-get_ancestral_copy <- function(output_path, expression_path){
+
+
+get_ancestral_copy <- function(input_path, output_path, expression_path){
   
   dups <- read.csv(paste0(output_path,'/Dup_Pairs.tsv'),sep='')
   orthologs <- read.csv(paste0(output_path,'/Dup_Pair_Orthologs.tsv'),sep='')
   expression <- read.csv(paste0(expression_path,'/Expression_Data.tsv'),sep='')
   
+  newick_tree <- ape::read.tree(paste0(input_path,'/Species_Tree/SpeciesTree_rooted.txt'))
   
   # clean the column names of the orthologs dataframe and replace empty cells with NAs
   orthologs <- orthologs %>% 
     rename_all(~gsub("_prot", "", .)) %>%
     mutate_all(~na_if(.,""))
   
-  # define the closest species of each species using a dictionary 
-  library(hash) # FIX THIS 
-  closest_species_dict <- hash(
-    dana = 'dpse',
-    dmel = 'dyak',
-    dmoj = 'dvir',
-    dper = 'dpse',
-    dpse = 'dper',
-    dvir = 'dmoj',
-    dwil = 'dvir',
-    dyak = 'dmel'
-  )
-  
-  # create a list of species of how related they are to each other going down the phylogeny 
-  ordered_species <- c('dyak','dmel','dana','dpse','dper','dwil','dvir','dmoj',
-                       'dvir','dwil','dper','dpse','dana','dmel','dyak')
   
   # create function to find the closest expressed ortholog to each duplicate pair
-  find_closest_ortholog <- function(row,species) {
-    closest_species <- closest_species_dict[[species]]
-    closest_gene <- row[[closest_species]]
+  find_closest_ortholog <- function(row,species,newick_tree) {
     
-    if (is.na(closest_gene) | grepl(',',closest_gene) | (!closest_gene %in% expression$YOgnID)){
-      n = 0
-      non_expressed = 0 
-      
-      index <- min(which(ordered_species == closest_species))
-      
-      while(is.na(closest_gene) | grepl(',',closest_gene) | (!closest_gene %in% expression$YOgnID)){
-        n = n + 1
-        non_expressed = non_expressed + 1
-        if ((index + n) > (length(ordered_species))) {return(NA)}
-        closest_species <- ordered_species[index+n]
-        closest_gene <- row[[closest_species]]
-      }
-    } 
+    # calculate phylogenetic distances between the given species and each tip  
+    species_node <- which(newick_tree$tip.label == species)
+    distances <- cophenetic(newick_tree)[species_node, ]
+    distances <- distances[distances > 0] # remove itself from distance calculation 
+    
+    # remove the duplicate pair species and missing species from the possible top choices 
+    exclude_species <- colnames(row)[apply(row, 2, function(x) all(is.na(x)))]
+    exclude_species <- c(exclude_species, species)
+    distances <- distances[setdiff(names(distances), exclude_species)]
+    
+    # pick the closest available tip to the species
+    closest_species <- names(which.min(distances)) # find the closest species by minimum distance
+    
+    # get the ortholog from that species 
+    closest_gene <- row[[closest_species]]
     return(closest_gene)
   }
-  
   
   # apply the function to each row of the ortholog table 
   orthologs$ancestral_copy <- NA
   for (row_num in 1:nrow(orthologs)) {
     row <- orthologs[row_num,] 
-    orthologs[row_num,'ancestral_copy'] <- find_closest_ortholog(row, species = row$duplicate_pair_species)
+    orthologs[row_num,'ancestral_copy'] <- find_closest_ortholog(row, species = row$duplicate_pair_species, newick_tree)
   }
   
   # merge the ancestral copy with the duplicate pairs

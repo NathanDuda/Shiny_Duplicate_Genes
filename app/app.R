@@ -62,13 +62,13 @@ server <- function(input, output, session) {
   # Function to run selected scripts
   run_selected_scripts <- function(input_path, expression_path, output_path, annotation_path, selected_scripts) {
 
-    func_counts <- NULL # allows these to not be chosen 
-    mech_counts <- NULL
+    #func_counts <- NULL # allows these to not be chosen 
+    #mech_counts <- NULL
     
     # Run selected scripts
     if ("Functionalization" %in% selected_scripts) {
       source('C:/Users/17735/Downloads/Shiny_Duplicate_Genes/scripts/Ancestral_Copy.R')
-      get_ancestral_copy(output_path, expression_path)
+      get_ancestral_copy(input_path, output_path, expression_path)
       source('C:/Users/17735/Downloads/Shiny_Duplicate_Genes/scripts/Functionalization.R')
       func_counts <- functionalization(output_path, expression_path)
       output$output_text_2 <- renderText({paste(func_counts['Conserved'], " conserved,")})
@@ -82,10 +82,9 @@ server <- function(input, output, session) {
       mech_counts <- duplication_mechanism(output_path, annotation_path)
       output$output_plot_2 <- renderPlot({visualize_mech(mech_counts)})
     }
-    
     if ("Selection" %in% selected_scripts) {
-      # Run Script 3
-      # Example: results$script3 <- yet_another_function(data)
+      #run_hyphy_command <- paste("bash ./scripts/HyPhy.sh", shQuote(input_path), shQuote(output_path), collapse = " ")
+      #system(run_hyphy_command, intern = TRUE)
     }
     
     # func_counts wont exist if Functionalization not chosen
