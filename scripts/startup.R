@@ -11,3 +11,6 @@ library(rtracklayer)
 library(igraph)
 library(seqinr)
 library(ape)
+library(plotly)
+library(tispec) # remotes::install_github("roonysgalbi/tispec")
+library(TAF) # for mkdir 

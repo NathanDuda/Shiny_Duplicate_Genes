@@ -7,43 +7,44 @@ functionalization <- function(output_path, expression_path) {
   dups <- read.csv(paste0(output_path,"/Dup_Pairs_Ancestral.tsv"), sep="")
   ortho_pairs <- read.csv(paste0(output_path,"/Ortholog_Pairs.tsv"), sep="")
   raw_exp <- read.csv(paste0(expression_path,"/Expression_Data.tsv"), sep="")
+  colnames(raw_exp)[1] <- 'gn'
   
   
   # calculate relative expression values 
   exp <- raw_exp
-  rownames(exp) <- exp$YOgnID
-  exp <- exp %>% select(-YOgnID)
+  rownames(exp) <- exp$gn
+  exp <- exp %>% select(-gn)
   exp <- exp / rowSums(exp)
-  exp$YOgnID <- rownames(exp)
-  exp <- exp[, c("YOgnID", setdiff(names(exp), "YOgnID"))]
+  exp$gn <- rownames(exp)
+  exp <- exp[, c("gn", setdiff(names(exp), "gn"))]
   
   # get exp for dups and ancestral
   dup_1_exp <- exp %>% rename_at(-1, ~paste('dup_1_', ., sep = ''))
-  dup_anc_exp <- dups %>%  merge(dup_1_exp, ., by.x = 'YOgnID', by.y ='dup_1') %>% rename(YOgnID = 'dup_1')
+  dup_anc_exp <- dups %>%  merge(dup_1_exp, ., by.x = 'gn', by.y ='dup_1') %>% rename(dup_1 = 'gn')
   
   dup_2_exp <- exp %>% rename_at(-1, ~paste('dup_2_', ., sep = ''))
-  dup_anc_exp <- dup_anc_exp %>% merge(dup_2_exp, ., by.x = 'YOgnID', by.y ='dup_2') %>% rename(YOgnID = 'dup_2')
+  dup_anc_exp <- dup_anc_exp %>% merge(dup_2_exp, ., by.x = 'gn', by.y ='dup_2') %>% rename(dup_2 = 'gn')
   
   anc_exp <- exp %>% rename_at(-1, ~paste('anc_', ., sep = ''))
-  dup_anc_exp <- dup_anc_exp %>% merge(anc_exp, ., by.x = 'YOgnID', by.y ='ancestral_copy') %>% rename(YOgnID = 'anc')
+  dup_anc_exp <- dup_anc_exp %>% merge(anc_exp, ., by.x = 'gn', by.y ='ancestral_copy') %>% rename(anc = 'gn')
   
   # get exp for ortholog pairs 
   ortho_x_exp <- exp %>% rename_at(-1, ~paste('ortho_x_', ., sep = ''))
-  ortho_pair_exp <- ortho_pairs %>% merge(ortho_x_exp, ., by.x = 'YOgnID', by.y ='YOgn.x') %>% rename(YOgnID = 'ortho_x')
+  ortho_pair_exp <- ortho_pairs %>% merge(ortho_x_exp, ., by.x = 'gn', by.y ='gn.x') %>% rename(ortho_x = 'gn')
   
   ortho_y_exp <- exp %>% rename_at(-1, ~paste('ortho_y_', ., sep = ''))
-  ortho_pair_exp <- ortho_pair_exp %>% merge(ortho_y_exp, ., by.x = 'YOgnID', by.y ='YOgn.y') %>% rename(YOgnID = 'ortho_y') %>%
+  ortho_pair_exp <- ortho_pair_exp %>% merge(ortho_y_exp, ., by.x = 'gn', by.y ='gn.y') %>% rename(ortho_y = 'gn') %>%
     select(-species.x, -species.y)
   
   # get combined expression values and after adding, calculate relative expression
   dup_1_exp <- raw_exp %>% rename_at(-1, ~paste('dup_1_', ., sep = ''))
-  dups_combined_exp <- dups %>%  merge(dup_1_exp, ., by.x = 'YOgnID', by.y ='dup_1') %>% rename(YOgnID = 'dup_1')
+  dups_combined_exp <- dups %>%  merge(dup_1_exp, ., by.x = 'gn', by.y ='dup_1') %>% rename(dup_1 = 'gn')
   
   dup_2_exp <- raw_exp %>% rename_at(-1, ~paste('dup_2_', ., sep = ''))
-  dups_combined_exp <- dups_combined_exp %>% merge(dup_2_exp, ., by.x = 'YOgnID', by.y ='dup_2') %>% rename(YOgnID = 'dup_2')
+  dups_combined_exp <- dups_combined_exp %>% merge(dup_2_exp, ., by.x = 'gn', by.y ='dup_2') %>% rename(dup_2 = 'gn')
   
-  tissue_names <- c('f_ac','f_dg','f_go','f_hd','f_re','f_tx','f_wb',
-                    'm_ac','m_dg','m_go','m_hd','m_re','m_tx','m_wb')
+  tissue_names <- colnames(exp[2:ncol(exp)]) 
+  
   for (tissue in tissue_names) {
     dups_combined_exp <- dups_combined_exp %>%
       rowwise() %>%
@@ -103,17 +104,11 @@ functionalization <- function(output_path, expression_path) {
 }
 
 
-visualize_func <- function(func_counts){
+visualize_func <- function(func_counts) {
   func_counts <- as.data.frame(func_counts)
-  ggplot(func_counts, aes(x="", y=Freq, group=Var1, fill=Var1)) +
-    geom_bar(width = 1, stat = "identity", position = position_fill()) +
-    geom_text(aes(label = Freq), position = position_fill(vjust = 0.5), colour = 'black', size = 5) +
-    theme_void() +
-    theme(legend.title = element_blank(), panel.background = element_rect(fill = "white", color = "white"), legend.background = element_rect(fill = "white", color = 'white')) +
-    coord_polar("y") +
-    scale_fill_manual(values=c("#3B7BBD", "#E23F51", "#6CBC4D",'#F18244'))
+  plot_ly(func_counts, labels = ~Var1, values = ~Freq, type = 'pie', hole = 0.6,
+          marker = list(colors = c("#3B7BBD", "#E23F51", "#6CBC4D", '#F18244'))) %>%
+    layout(title = "Functionalization Categories", showlegend = TRUE)
 }
-
-
 
 

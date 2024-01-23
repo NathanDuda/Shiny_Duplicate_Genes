@@ -6,7 +6,7 @@ clean_orthofinder <- function(input_path,output_path){
   
   # get the one to ones 
   one_to_ones <- orthogroups %>%
-    filter_all(all_vars(!grepl(",", .))) %>% 
+    filter_all(all_vars(!grepl(",", .))) %>% # remove the rows with commas (separate multiple genes in one species)
     mutate_all(~ifelse(. == "", NA, .)) %>% # change empty cells to NA 
     na.omit()
   
@@ -19,19 +19,18 @@ clean_orthofinder <- function(input_path,output_path){
   
   # get the two to one to ones to zeros 
   two_to_ones <- orthogroup_gene_count %>%
-    filter(if_all(2:9, ~. <= 2)) %>%              # keep only pairs 
-    filter(rowSums(select(., 2:9) == 2) == 1) %>% # make sure there is only one species with 2 copies 
-    filter(Total > 2)                             # remove duplicates without any orthologs 
+    filter(if_all(2:(ncol(orthogroup_gene_count) - 1), ~. <= 2)) %>%              # keep only pairs 
+    filter(rowSums(select(., 2:(ncol(orthogroup_gene_count) - 1)) == 2) == 1) %>% # make sure there is only one species with 2 copies 
+    filter(Total > 2)                                                             # remove duplicates without any orthologs 
   
-  
-  # add a column with the name of the species with the duplication
+  # add a column with the name of the species that has the duplication
   two_to_ones$duplicate_pair_species <- 
-    apply(two_to_ones[, 2:9], 1, function(x) {
+    apply(two_to_ones[, 2:(ncol(two_to_ones) - 1)], 1, function(x) {
       col_index <- which(x == 2)
-      return(colnames(two_to_ones[, 2:9])[col_index])})
+      return(colnames(two_to_ones[, 2:(ncol(two_to_ones) - 1)])[col_index])})
   
   two_to_ones <- two_to_ones[c('Orthogroup','duplicate_pair_species')]
-  two_to_ones$duplicate_pair_species <- gsub('_prot','',two_to_ones$duplicate_pair_species)
+  two_to_ones$duplicate_pair_species <- gsub('_prot','',two_to_ones$duplicate_pair_species) # DELETE THIS 
   
   # merge back with the gene names 
   two_to_ones <- merge(orthogroups,two_to_ones,by='Orthogroup')
@@ -45,7 +44,7 @@ clean_orthofinder <- function(input_path,output_path){
     rowwise() %>%
     
     # extract the duplicate pair genes
-    mutate(duplicate_pair = toString(c_across(2:9)[grep(",", c_across(2:9))])) %>%
+    mutate(duplicate_pair = toString(c_across(2:(ncol(two_to_ones) - 1))[grep(",", c_across(2:(ncol(two_to_ones) - 1)))])) %>%
     select(Orthogroup, duplicate_pair) %>%
     separate(duplicate_pair, into = c("dup_1", "dup_2"), sep = ", ") %>%
     

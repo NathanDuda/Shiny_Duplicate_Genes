@@ -66,15 +66,11 @@ duplication_mechanism <- function(output_path, annotation_path){
 }
 
 
-visualize_mech <- function(mech_counts){
+visualize_mech <- function(mech_counts) {
   mech_counts <- as.data.frame(mech_counts)
-  ggplot(mech_counts, aes(x="", y=Freq, group=Var1, fill=Var1)) +
-    geom_bar(width = 1, stat = "identity", position = position_fill()) +
-    geom_text(aes(label = Freq), position = position_fill(vjust = 0.5), colour = 'black', size = 3) +
-    theme_void() +
-    theme(legend.title = element_blank(), panel.background = element_rect(fill = "white", color = "white"), legend.background = element_rect(fill = "white", color = 'white')) +
-    coord_polar("y") +
-    scale_fill_manual(values=c("#F67280", "#E9AB17", "#1E90FF"))
+  plot_ly(mech_counts, labels = ~Var1, values = ~Freq, type = 'pie', hole = 0.6,
+          marker = list(colors = c("#F67280", "#E9AB17", "#1E90FF"))) %>%
+    layout(title = "Duplication Mechanism", showlegend = TRUE)
 }
 
 
